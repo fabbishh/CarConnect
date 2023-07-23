@@ -1,10 +1,10 @@
 ﻿CKEDITOR.editorConfig = function (config) {
-    // Удаляем все кнопки из тулбара
-    config.toolbar = [];
 
     // Добавляем только кнопки для нумерованных списков и выделения жирным текстом
-    config.toolbar.push(['NumberedList']);
-    config.toolbar.push(['Bold']);
+    config.toolbar = [
+        { name: 'basicstyles', items: ['Bold'] },
+        { name: 'lists', items: ['NumberedList'] }
+    ];
 
     config.height = 700;
 
