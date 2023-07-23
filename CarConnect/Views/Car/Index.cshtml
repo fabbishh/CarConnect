@@ -1,0 +1,154 @@
+﻿@using CarConnect.Models.Car
+@model CarsViewModel
+
+@using (Html.BeginForm("AddUserCar", "Car", FormMethod.Post, new { id = "addCarForm" }))
+{
+    <div style="display: flex; align-items: center;">
+        <div id="dropdownContainer" style="margin-right: 10px;">
+            @Html.DropDownListFor(model => model.SelectedCarId, new SelectList(Model.DropdownCars, "Id", "Model"), "-- Выберите автомобиль --")
+        </div>
+        <input id="addCarSubmit" type="submit" class="btn btn-primary" value="Добавить"/>
+        <span id="loadingMessage" style="display: none;">Подождите...</span>
+    </div>
+}
+
+<hr />
+
+<h2>Добавленные автомобили:</h2>
+@await Html.PartialAsync("_AddedCarsTable", Model.AddedCars)
+
+<!-- Модальное окно подтверждения удаления -->
+<div id="deleteConfirmationModal" class="modal hide fade in" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Подтверждение удаления</h4>
+                <button type="button" class="close" data-bs-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Вы действительно хотите удалить эту машину?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-bs-dismiss="modal">Отмена</button>
+                <a href="#" id="deleteCarLink" class="btn btn-danger">Удалить</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Функция для отображения модального окна подтверждения удаления
+        function confirmDelete(url) {
+            $('#deleteCarLink').attr('href', url); // Устанавливаем ссылку на удаление в модальном окне
+            $('#deleteConfirmationModal').modal('show'); // Открываем модальное окно
+        }
+
+        function addCar() {
+            var formData = $('#addCarForm').serialize();
+
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("AddUserCar", "Car")',
+                data: formData,
+                beforeSend: function () {
+                    $('#loadingMessage').show();
+                },
+                success: function (result) {
+                    $('#loadingMessage').hide();
+                    updateAddedCarsTable(result);
+                    updateDropdown();
+                },
+                error: function (xhr, status, error) {
+                    alert("Произошла ошибка при добавлении машины.");
+                }
+            });
+        }
+
+        // Функция для отправки AJAX-запроса на удаление машины
+        function removeCar(url) {
+            $.ajax({
+                type: 'DELETE',
+                method: 'DELETE',
+                url: url,
+                success: function (result) {
+                    $('#deleteConfirmationModal').modal('hide'); // Закрываем модальное окно
+                    updateAddedCarsTable(result);
+                    updateDropdown();
+                },
+                error: function (xhr, status, error) {
+                    alert("Произошла ошибка при удалении машины.");
+                }
+            });
+        }
+
+        // Функция для обновления таблицы с добавленными автомобилями
+        function updateAddedCarsTable(result) {
+            $('#carTable').html(result);
+        }
+
+        // Функция для обновления дропдауна с доступными автомобилями
+        function updateDropdown() {
+            $.ajax({
+                type: 'GET',
+                url: '@Url.Action("GetDropdownCars", "Car")',
+                success: function (data) {
+                    var dropdown = $('#dropdownContainer');
+                    dropdown.empty();
+                    var selectList = $('<select></select>').attr('id', 'SelectedCarId').attr('name', 'SelectedCarId');
+                    selectList.append($('<option></option>').val('').text('-- Выберите автомобиль --'));
+                    $.each(data, function (index, item) {
+                        selectList.append($('<option></option>').val(item.id).text(item.model));
+                    });
+                    dropdown.append(selectList);
+                    updateAddButtonState();
+                },
+                error: function (xhr, status, error) {
+                    alert("Произошла ошибка при обновлении списка автомобилей.");
+                }
+            });
+        }
+
+        function updateAddButtonState() {
+            var addButton = $('#addCarSubmit');
+            addButton.prop('disabled', $('#SelectedCarId').val() === '');
+        }
+
+        $(document).ready(function () {
+            updateAddButtonState();
+
+            $(document).on('change', '#SelectedCarId', function () {
+                updateAddButtonState(); 
+            });
+
+            // Функция для отключения кнопки добавления, если выбрано значение по умолчанию в дропдауне
+            $('#addCarForm').submit(function (e) {
+                if ($('#SelectedCarId').val() === '') {
+                    e.preventDefault(); // Предотвращаем отправку формы
+                    alert("Пожалуйста, выберите автомобиль.");
+                }
+                else {
+                    $('#loadingMessage').show();
+                }
+            });
+
+            $('#addCarForm').submit(function (e) {
+                e.preventDefault();
+                if ($('#SelectedCarId').val() === '') {
+                    alert("Пожалуйста, выберите автомобиль.");
+                } else {
+                    addCar();
+                }
+            });
+
+            // Обработчик для клика по иконке удаления машины
+            $('#deleteCarLink').click(function (e) {
+                e.preventDefault();
+                var url = $(this).attr('href'); // Получаем URL для удаления
+                removeCar(url);
+            });
+        });
+    </script>
+}

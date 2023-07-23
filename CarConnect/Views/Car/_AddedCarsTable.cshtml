@@ -1,0 +1,17 @@
+﻿<table id="carTable" class="table-with-divider">
+    <tr>
+        <th></th>
+        <th></th>
+    </tr>
+    @foreach (var addedCar in Model)
+    {
+        <tr>
+            <td>@addedCar.Model</td>
+            <td>
+                <a href="javascript:void(0);" onclick="confirmDelete('@Url.Action("RemoveCarFromAdded", "Car", new { carId = addedCar.Id })')">
+                    <i class="fa-solid fa-circle-xmark" style="color: #ff0000;"></i>
+                </a>
+            </td>
+        </tr>
+    }
+</table>

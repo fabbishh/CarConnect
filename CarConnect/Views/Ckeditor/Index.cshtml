@@ -1,0 +1,13 @@
+﻿<!-- Подключаем CKEditor -->
+<script src="~/lib/ckeditor/ckeditor.js"></script>
+
+<!-- Создаем элемент, где будет отображаться CKEditor -->
+<textarea name="editor1" id="editor1" rows="10" cols="80"></textarea>
+
+
+<!-- Скрипт для настройки CKEditor для editor1 -->
+<script>
+    CKEDITOR.replace('editor1', {
+        customConfig: '/js/ckeditor1_config.js'
+    });
+</script>
